@@ -1,62 +1,53 @@
-// src/components/TodoDetail.tsx
+// src/components/todo-detail.component.tsx
 
 import React, { useEffect, useState } from 'react';
 
 import { Todo } from '../types/todo-type';
 
-interface TodoDetailProps {
+interface Props {
   todoId: number;
 }
-/**
- * TodoDetail component fetches and displays the details of a specific todo item based on the provided todoId.
- * It uses the useEffect hook to fetch the todo details from the API when the component mounts or when the todoId changes.
- * @param todoId - The ID of the todo item to fetch and display.
- */
-export const TodoDetail: React.FC<TodoDetailProps> = ({ todoId }) => {
+
+export const TodoDetail = ({ todoId }: Props) => {
   const [todo, setTodo] = useState<Todo | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTodo = async () => {
-      setLoading(true);
-      setError(null);
-      setTodo(null);
-      try {
-        const response = await fetch(
-          `https://jsonplaceholder.typicode.com/todos/${todoId}`,
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const data: Todo = await response.json();
-        setTodo(data);
-      } catch (error) {
-        setError(error instanceof Error ? error.message : 'Unknown error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
+    setLoading(true);
+    setError(null);
+    setTodo(null);
 
-    if (todoId) {
-      fetchTodo();
-    }
+    fetch(`https://jsonplaceholder.typicode.com/todos/${todoId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Fetch failed');
+        return res.json();
+      })
+      .then((data: Todo) => setTodo(data))
+      .catch(() => setError('Error loading todo'))
+      .finally(() => setLoading(false));
   }, [todoId]);
 
-  if (loading) return <p>Loading todo details...</p>;
-  if (error) return <p className="error">Error loading todo: {error}</p>;
+  if (loading) return <p>Loading...</p>;
+
+  if (error) {
+    return <div role="alert">{error}</div>;
+  }
+
   if (!todo) return <p>No todo found.</p>;
 
   return (
     <div>
-      <h2>Todo Details</h2>
-      <p>ID: {todo.id}</p>
+      <h2>Todo Detail</h2>
       <p>
-        <span>{todo.title}</span>
+        <strong>ID:</strong> {todo.id}
       </p>
-      <p>Completed</p>
-      <p>Status: {todo.completed ? 'Yes' : 'No'}</p>
-      <p>User ID: {todo.userId}</p>
+      <p>
+        <strong>Title:</strong> {todo.title}
+      </p>
+      <p>
+        <strong>Status:</strong> {todo.completed ? 'Completed' : 'Open'}
+      </p>
     </div>
   );
 };
